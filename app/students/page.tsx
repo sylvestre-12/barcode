@@ -5,210 +5,614 @@ import StudentQR from "@/components/StudentQR";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
+
 type Student = {
-  id: string;
-  studentId: string;
-  name: string;
-  email: string | null;
-  department: string | null;
+  id:string;
+  studentId:string;
+  name:string;
+  email:string | null;
+  department:string | null;
 };
 
-export default function StudentsPage() {
-  const [students, setStudents] = useState<Student[]>([]);
-  const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
-  useEffect(() => {
-    loadStudents();
-  }, []);
 
-  // ===============================
-  // FIXED API CALL (IMPORTANT)
-  // ===============================
-  async function loadStudents() {
-    try {
-      setLoading(true);
+export default function StudentsPage(){
 
-      const res = await fetch("/api/student/create"); // ✅ FIXED HERE
 
-      const json = await res.json();
+const [students,setStudents]=useState<Student[]>([]);
+const [search,setSearch]=useState("");
+const [loading,setLoading]=useState(true);
+const [error,setError]=useState("");
 
-      if (!res.ok) {
-        throw new Error(json.error || "Failed to load students");
-      }
 
-      setStudents(json.data);
-    } catch (err) {
-      console.error(err);
-      setError("Unable to load students.");
-    } finally {
-      setLoading(false);
-    }
-  }
 
-  const filtered = useMemo(() => {
-    return students.filter((student) =>
-      (
-        student.name +
-        " " +
-        (student.email ?? "") +
-        " " +
-        student.studentId +
-        " " +
-        (student.department ?? "")
-      )
-        .toLowerCase()
-        .includes(search.toLowerCase())
-    );
-  }, [students, search]);
+useEffect(()=>{
 
-  // ===============================
-  // REAL PDF DOWNLOAD FUNCTION
-  // ===============================
-  async function downloadPDF(
-    id: string,
-    name: string,
-    studentId: string
-  ) {
-    const card = document.getElementById(id);
+loadStudents();
 
-    if (!card) return;
+},[]);
 
-    const canvas = await html2canvas(card, {
-      scale: 3,
-      backgroundColor: "#ffffff",
-      useCORS: true,
-    });
 
-    const imgData = canvas.toDataURL("image/png");
 
-    const pdf = new jsPDF({
-      orientation: "landscape",
-      unit: "mm",
-      format: [54, 86], // ID CARD SIZE
-    });
+async function loadStudents(){
 
-    pdf.addImage(imgData, "PNG", 0, 0, 86, 54);
+try{
 
-    pdf.save(`${name}_${studentId}.pdf`);
-  }
+setLoading(true);
 
-  return (
-    <main className="min-h-screen bg-gray-100 p-8">
 
-      <div className="max-w-7xl mx-auto">
+const res=await fetch("/api/student/create");
 
-        <h1 className="text-4xl font-bold mb-2">
-          Student Cards
-        </h1>
 
-        <p className="text-gray-500 mb-8">
-          Search students and download official ID cards.
-        </p>
+const json=await res.json();
 
-        {/* SEARCH */}
-        <input
-          placeholder="Search student..."
-          className="w-full p-3 border rounded-xl mb-8"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
 
-        {/* STATES */}
-        {loading && <p>Loading students...</p>}
-        {error && <p className="text-red-600">{error}</p>}
-        {!loading && filtered.length === 0 && (
-          <p>No students found.</p>
-        )}
+if(!res.ok){
 
-        {/* GRID */}
-        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+throw new Error(json.error);
 
-          {filtered.map((student) => (
+}
 
-            <div
-              key={student.id}
-              id={student.id}
-              className="
-                w-[340px]
-                h-[210px]
-                rounded-2xl
-                overflow-hidden
-                bg-gradient-to-br
-                from-blue-700
-                to-blue-900
-                text-white
-                shadow-2xl
-                p-4
-              "
-            >
 
-              {/* HEADER */}
-              <div className="border-b border-white/30 pb-2">
-                <h1 className="text-lg font-bold">JESCA</h1>
-                <p className="text-xs tracking-widest">
-                  STUDENT IDENTIFICATION CARD
-                </p>
-              </div>
+setStudents(json.data || []);
 
-              {/* BODY */}
-              <div className="flex mt-3 gap-3">
 
-                {/* LEFT */}
-                <div className="flex-1">
+}catch(error){
 
-                  <h2 className="font-bold text-sm">
-                    {student.name}
-                  </h2>
+console.log(error);
 
-                  <p className="text-xs">
-                    {student.studentId}
-                  </p>
+setError("Unable to load students.");
 
-                  <p className="text-xs">
-                    {student.department}
-                  </p>
+}
+finally{
 
-                </div>
+setLoading(false);
 
-                {/* QR */}
-                <div className="bg-white p-1 rounded-lg">
-                  <StudentQR value={student.studentId} />
-                </div>
+}
 
-              </div>
+}
 
-              {/* BUTTON */}
-              <button
-                onClick={() =>
-                  downloadPDF(
-                    student.id,
-                    student.name,
-                    student.studentId
-                  )
-                }
-                className="
-                  mt-4
-                  w-full
-                  bg-white
-                  text-blue-700
-                  font-bold
-                  py-2
-                  rounded-lg
-                "
-              >
-                Download PDF
-              </button>
 
-            </div>
 
-          ))}
 
-        </div>
 
-      </div>
+const filtered=useMemo(()=>{
 
-    </main>
-  );
+
+return students.filter(student=>
+
+(
+student.name+
+student.studentId+
+(student.email ?? "")+
+(student.department ?? "")
+)
+.toLowerCase()
+.includes(search.toLowerCase())
+
+
+);
+
+
+},[students,search]);
+
+
+
+
+
+
+
+async function downloadPDF(id:string,name:string,studentId:string){
+
+
+const card=document.getElementById(id);
+
+
+if(!card)return;
+
+
+
+const canvas=await html2canvas(card,{
+
+scale:4,
+
+backgroundColor:"#ffffff",
+
+useCORS:true
+
+});
+
+
+
+const image=canvas.toDataURL("image/png");
+
+
+
+const pdf=new jsPDF({
+
+orientation:"landscape",
+
+unit:"mm",
+
+format:[86,54]
+
+});
+
+
+
+pdf.addImage(
+
+image,
+
+"PNG",
+
+0,
+
+0,
+
+86,
+
+54
+
+);
+
+
+
+pdf.save(
+
+`${name}-${studentId}.pdf`
+
+);
+
+
+}
+
+
+
+
+
+
+
+
+function printCard(id:string){
+
+
+const card=document.getElementById(id);
+
+
+if(!card)return;
+
+
+
+const windowPrint=window.open("","_blank");
+
+
+if(!windowPrint)return;
+
+
+
+windowPrint.document.write(`
+
+<html>
+
+<head>
+
+<title>
+Silver Foundation Student Card
+</title>
+
+
+<style>
+
+body{
+
+display:flex;
+
+justify-content:center;
+
+align-items:center;
+
+height:100vh;
+
+}
+
+
+.card{
+
+width:86mm;
+
+height:54mm;
+
+}
+
+
+
+</style>
+
+
+</head>
+
+
+<body>
+
+
+<div class="card">
+
+${card.innerHTML}
+
+
+</div>
+
+
+</body>
+
+
+</html>
+
+`);
+
+
+
+windowPrint.document.close();
+
+windowPrint.print();
+
+
+}
+
+
+
+
+
+
+
+return(
+
+
+<main className="min-h-screen bg-gray-100 p-8">
+
+
+<div className="max-w-7xl mx-auto">
+
+
+<h1 className="text-4xl font-bold">
+
+Silver Foundation
+
+</h1>
+
+
+<p className="text-gray-500 mb-8">
+
+Official Student Identification Cards
+
+</p>
+
+
+
+
+
+<input
+
+placeholder="Search student..."
+
+className="
+w-full
+p-3
+border
+rounded-xl
+mb-8
+"
+
+value={search}
+
+onChange={(e)=>setSearch(e.target.value)}
+
+/>
+
+
+
+
+
+
+{loading && (
+
+<p>
+Loading students...
+</p>
+
+)}
+
+
+
+{error && (
+
+<p className="text-red-600">
+
+{error}
+
+</p>
+
+)}
+
+
+
+
+
+
+<div className="
+grid
+md:grid-cols-2
+xl:grid-cols-3
+gap-10
+">
+
+
+
+
+
+{filtered.map(student=>(
+
+
+<div key={student.id}>
+
+
+{/* CARD */}
+
+<div
+
+id={student.id}
+
+className="
+w-[344px]
+h-[216px]
+rounded-2xl
+overflow-hidden
+shadow-2xl
+bg-gradient-to-br
+from-slate-900
+via-blue-900
+to-blue-600
+text-white
+p-5
+"
+
+>
+
+
+
+<div className="
+flex
+justify-between
+items-start
+border-b
+border-white/30
+pb-3
+">
+
+
+<div>
+
+<h1 className="
+text-xl
+font-bold
+tracking-wide
+">
+
+Silver Foundation
+
+</h1>
+
+
+<p className="
+text-xs
+opacity-80
+">
+
+STUDENT ID CARD
+
+</p>
+
+
+</div>
+
+
+
+<div className="
+text-xs
+bg-white/20
+px-2
+py-1
+rounded
+">
+
+ACTIVE
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+<div className="
+flex
+justify-between
+items-center
+mt-5
+">
+
+
+<div>
+
+
+<h2 className="
+text-lg
+font-bold
+">
+
+{student.name}
+
+</h2>
+
+
+<p className="text-sm">
+
+ID:
+
+<span className="font-bold">
+
+{" "}
+{student.studentId}
+
+</span>
+
+
+</p>
+
+
+
+<p className="text-sm">
+
+{student.department}
+
+</p>
+
+
+
+<p className="text-xs mt-1 opacity-80">
+
+{student.email}
+
+</p>
+
+
+
+</div>
+
+
+
+
+
+<div className="
+bg-white
+rounded-xl
+p-2
+">
+
+<StudentQR
+
+value={student.studentId}
+
+/>
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<div className="
+flex
+gap-3
+mt-4
+">
+
+
+<button
+
+onClick={()=>downloadPDF(
+
+student.id,
+
+student.name,
+
+student.studentId
+
+)}
+
+className="
+flex-1
+bg-green-600
+hover:bg-green-700
+text-white
+rounded-lg
+py-2
+font-semibold
+"
+
+>
+
+Download PDF
+
+</button>
+
+
+
+
+
+<button
+
+onClick={()=>printCard(student.id)}
+
+className="
+flex-1
+bg-blue-600
+hover:bg-blue-700
+text-white
+rounded-lg
+py-2
+font-semibold
+"
+
+>
+
+Print
+
+</button>
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+))}
+
+
+
+
+</div>
+
+
+</div>
+
+
+</main>
+
+
+);
+
+
 }
