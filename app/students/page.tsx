@@ -30,7 +30,7 @@ export default function StudentsPage() {
     try {
       setLoading(true);
 
-      const res = await fetch("/api/student"); // ✅ FIXED HERE
+      const res = await fetch("/api/student/create"); // ✅ FIXED HERE
 
       const json = await res.json();
 

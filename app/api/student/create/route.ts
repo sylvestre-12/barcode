@@ -21,24 +21,48 @@ async function generateStudentId(): Promise<string> {
   }
 }
 
+
 // =======================================
 // GET ALL STUDENTS
 // =======================================
 export async function GET() {
   try {
+
     const students = await prisma.student.findMany({
       orderBy: {
         created_at: "desc",
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      total: students.length,
-      students,
-    });
+
+    console.log(
+      "STUDENTS FROM DATABASE:",
+      students.length
+    );
+
+
+    return NextResponse.json(
+      {
+        success: true,
+        count: students.length,
+
+        // IMPORTANT
+        // Frontend uses json.data
+        data: students,
+      },
+      {
+        status: 200,
+      }
+    );
+
+
   } catch (error) {
-    console.error("GET STUDENTS ERROR:", error);
+
+    console.error(
+      "GET STUDENTS ERROR:",
+      error
+    );
+
 
     return NextResponse.json(
       {
@@ -49,113 +73,191 @@ export async function GET() {
         status: 500,
       }
     );
+
   }
 }
+
+
 
 // =======================================
 // CREATE STUDENT
 // =======================================
-export async function POST(req: Request) {
+export async function POST(
+  req: Request
+) {
+
   try {
+
     const body = await req.json();
 
-    const name = body.name?.trim();
-    const email = body.email?.trim().toLowerCase();
-    const department = body.className?.trim();
 
-    // -------------------------------
+    const name =
+      body.name?.trim();
+
+    const email =
+      body.email?.trim().toLowerCase();
+
+    const department =
+      body.className?.trim();
+
+
+
     // Validation
-    // -------------------------------
-    if (!name || !email || !department) {
+    if (
+      !name ||
+      !email ||
+      !department
+    ) {
+
       return NextResponse.json(
         {
-          success: false,
-          error: "Name, email and class are required.",
+          success:false,
+          error:
+          "Name, email and class are required.",
         },
         {
-          status: 400,
+          status:400,
         }
       );
+
     }
+
+
+
+    // Email validation
 
     const emailRegex =
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!emailRegex.test(email)) {
+
+    if(
+      !emailRegex.test(email)
+    ){
+
       return NextResponse.json(
         {
-          success: false,
-          error: "Invalid email address.",
+          success:false,
+          error:
+          "Invalid email address.",
         },
         {
-          status: 400,
+          status:400,
         }
       );
+
     }
 
-    // -------------------------------
-    // Duplicate Email
-    // -------------------------------
-    const existingStudent = await prisma.student.findUnique({
-      where: {
-        email,
-      },
-    });
 
-    if (existingStudent) {
+
+
+    // Check duplicate email
+
+    const existingStudent =
+      await prisma.student.findUnique({
+
+        where:{
+          email,
+        },
+
+      });
+
+
+
+    if(existingStudent){
+
       return NextResponse.json(
         {
-          success: false,
-          error: "A student with this email already exists.",
+          success:false,
+          error:
+          "Student email already exists.",
         },
         {
-          status: 409,
+          status:409,
         }
       );
+
     }
 
-    // -------------------------------
-    // Generate Student ID
-    // -------------------------------
-    const studentId = await generateStudentId();
 
-    // QR value
-    const qrValue = studentId;
 
-    // -------------------------------
-    // Save Student
-    // -------------------------------
-    const student = await prisma.student.create({
-      data: {
-        studentId,
-        name,
-        email,
-        department,
-        qrCode: qrValue,
-      },
-    });
+
+    // Generate ID
+
+    const studentId =
+      await generateStudentId();
+
+
+
+    // QR contains Student ID
+
+    const qrCode =
+      studentId;
+
+
+
+
+    // Create student
+
+    const student =
+      await prisma.student.create({
+
+        data:{
+
+          studentId,
+
+          name,
+
+          email,
+
+          department,
+
+          qrCode,
+
+        },
+
+      });
+
+
+
 
     return NextResponse.json(
       {
-        success: true,
-        message: "Student created successfully.",
+        success:true,
+
+        message:
+        "Student created successfully.",
+
         student,
+
       },
       {
-        status: 201,
+        status:201,
       }
     );
-  } catch (error) {
-    console.error("CREATE STUDENT ERROR:", error);
+
+
+
+  } catch(error){
+
+
+    console.error(
+      "CREATE STUDENT ERROR:",
+      error
+    );
+
 
     return NextResponse.json(
       {
-        success: false,
-        error: "Internal server error.",
+        success:false,
+        error:
+        "Internal server error.",
       },
       {
-        status: 500,
+        status:500,
       }
     );
+
+
   }
+
 }
