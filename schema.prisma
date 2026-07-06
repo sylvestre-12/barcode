@@ -14,47 +14,39 @@ model Profile {
   email          String         @unique
   phone          String?
   role           String
-  approved       Boolean        @default(false)
-  password       String
   barcode        String?        @unique
-  email_verified Boolean        @default(false)
+  password       String
   created_at     DateTime       @default(now())
-  OTP            OTP[]
+  approved       Boolean        @default(false)
+  email_verified Boolean        @default(false)
   Anomaly        Anomaly[]
   AuditLog       AuditLog[]
-  Notification   Notification[]
   LoginAttempt   LoginAttempt[]
+  Notification   Notification[]
+  OTP            OTP[]
 }
 
 model Barcode {
-  id   String @id @default(uuid())
-  code String @unique
-
+  id         String   @id @default(uuid())
+  code       String   @unique
   student_id String
-  is_active  Boolean @default(true)
-
+  is_active  Boolean  @default(true)
   created_at DateTime @default(now())
-
-  student Student @relation(fields: [student_id], references: [id])
+  student    Student  @relation(fields: [student_id], references: [id])
 }
 
 model AttendanceRecord {
-  id String @id @default(uuid())
-
-  student_id String
-  barcode    String
-
-  check_in  DateTime
-  check_out DateTime?
-  date      DateTime
-
-  status           String
+  id               String    @id @default(uuid())
+  barcode          String
+  check_in         DateTime
+  check_out        DateTime?
+  date             DateTime
   duration_minutes Int?
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  student Student @relation(fields: [student_id], references: [id])
+  status           String
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+  student_id       String
+  student          Student   @relation(fields: [student_id], references: [id])
 }
 
 model OTP {
@@ -64,81 +56,64 @@ model OTP {
   used       Boolean  @default(false)
   expiresAt  DateTime
   created_at DateTime @default(now())
-
-  user Profile @relation(fields: [user_id], references: [id])
+  user       Profile  @relation(fields: [user_id], references: [id])
 }
 
 model Anomaly {
-  id      String @id @default(uuid())
-  user_id String
-
-  type     String
-  severity String
-  score    Float?
-
+  id          String   @id @default(uuid())
+  type        String
+  severity    String
   description String
-
-  detected_at DateTime @default(now())
   dismissed   Boolean  @default(false)
-
-  user Profile @relation(fields: [user_id], references: [id])
+  detected_at DateTime @default(now())
+  score       Float?
+  user_id     String
+  user        Profile  @relation(fields: [user_id], references: [id])
 }
 
 model AuditLog {
-  id      String  @id @default(uuid())
-  user_id String?
-
-  action    String
-  entity    String
-  entity_id String?
-  details   Json?
-
+  id         String   @id @default(uuid())
+  action     String
   ip_address String?
   created_at DateTime @default(now())
-
-  user Profile? @relation(fields: [user_id], references: [id])
+  details    Json?
+  entity     String
+  entity_id  String?
+  user_id    String?
+  user       Profile? @relation(fields: [user_id], references: [id])
 }
 
 model Notification {
-  id      String  @id @default(uuid())
-  user_id String?
-
-  type    String
-  title   String
-  message String
-
-  read Boolean @default(false)
-
+  id         String   @id @default(uuid())
+  type       String
+  title      String
+  message    String
+  read       Boolean  @default(false)
   created_at DateTime @default(now())
-
-  user Profile? @relation(fields: [user_id], references: [id])
+  user_id    String?
+  user       Profile? @relation(fields: [user_id], references: [id])
 }
 
 model LoginAttempt {
-  id      String @id @default(uuid())
-  user_id String
-
+  id            String    @id @default(uuid())
   attempt_count Int       @default(0)
   locked_until  DateTime?
   last_attempt  DateTime?
-
-  user Profile @relation(fields: [user_id], references: [id])
+  user_id       String
+  user          Profile   @relation(fields: [user_id], references: [id])
 }
 
 model Student {
-  id        String  @id @default(uuid())
-  studentId String  @unique
-  name      String
-  email     String? @unique
-  phone     String?
-  qrCode    String  @unique
-
-  department String?
-  year       String?
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
+  id          String             @id @default(uuid())
+  studentId   String             @unique
+  name        String
+  email       String?            @unique
+  phone       String?
+  qrCode      String             @unique
+  department  String?
+  year        String?
+  created_at  DateTime           @default(now())
+  updated_at  DateTime           @updatedAt
   attendances AttendanceRecord[]
   Barcode     Barcode[]
 }
