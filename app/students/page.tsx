@@ -2,13 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import StudentQR from "@/components/StudentQR";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 type Student = {
   id: string;
   studentId: string;
   name: string;
   email: string | null;
-  department: string |null;
+  department: string | null;
 };
 
 export default function StudentsPage() {
@@ -21,16 +23,19 @@ export default function StudentsPage() {
     loadStudents();
   }, []);
 
+  // ===============================
+  // FIXED API CALL (IMPORTANT)
+  // ===============================
   async function loadStudents() {
     try {
       setLoading(true);
 
-      const res = await fetch("/api/student/create");
+      const res = await fetch("/api/student"); // ✅ FIXED HERE
 
       const json = await res.json();
 
       if (!res.ok) {
-        throw new Error(json.error);
+        throw new Error(json.error || "Failed to load students");
       }
 
       setStudents(json.data);
@@ -58,67 +63,51 @@ export default function StudentsPage() {
     );
   }, [students, search]);
 
-  function printCard(id: string) {
+  // ===============================
+  // REAL PDF DOWNLOAD FUNCTION
+  // ===============================
+  async function downloadPDF(
+    id: string,
+    name: string,
+    studentId: string
+  ) {
     const card = document.getElementById(id);
 
     if (!card) return;
 
-    const win = window.open("", "_blank");
+    const canvas = await html2canvas(card, {
+      scale: 3,
+      backgroundColor: "#ffffff",
+      useCORS: true,
+    });
 
-    if (!win) return;
+    const imgData = canvas.toDataURL("image/png");
 
-    win.document.write(`
-      <html>
-      <head>
-        <title>Student Card</title>
+    const pdf = new jsPDF({
+      orientation: "landscape",
+      unit: "mm",
+      format: [54, 86], // ID CARD SIZE
+    });
 
-        <style>
-        body{
-            display:flex;
-            justify-content:center;
-            align-items:center;
-            height:100vh;
-            font-family:Arial;
-            background:white;
-        }
+    pdf.addImage(imgData, "PNG", 0, 0, 86, 54);
 
-        .card{
-            width:350px;
-        }
-        </style>
-
-      </head>
-
-      <body>
-
-      <div class="card">
-      ${card.innerHTML}
-      </div>
-
-      </body>
-
-      </html>
-    `);
-
-    win.document.close();
-    win.focus();
-    win.print();
-    win.close();
+    pdf.save(`${name}_${studentId}.pdf`);
   }
 
   return (
-    <main className="min-h-screen bg-gray-100">
+    <main className="min-h-screen bg-gray-100 p-8">
 
-      <div className="max-w-7xl mx-auto p-8">
+      <div className="max-w-7xl mx-auto">
 
         <h1 className="text-4xl font-bold mb-2">
           Student Cards
         </h1>
 
         <p className="text-gray-500 mb-8">
-          Search students and print their QR cards.
+          Search students and download official ID cards.
         </p>
 
+        {/* SEARCH */}
         <input
           placeholder="Search student..."
           className="w-full p-3 border rounded-xl mb-8"
@@ -126,18 +115,14 @@ export default function StudentsPage() {
           onChange={(e) => setSearch(e.target.value)}
         />
 
-        {loading && (
-          <p>Loading students...</p>
-        )}
-
-        {error && (
-          <p className="text-red-600">{error}</p>
-        )}
-
+        {/* STATES */}
+        {loading && <p>Loading students...</p>}
+        {error && <p className="text-red-600">{error}</p>}
         {!loading && filtered.length === 0 && (
           <p>No students found.</p>
         )}
 
+        {/* GRID */}
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
 
           {filtered.map((student) => (
@@ -145,38 +130,75 @@ export default function StudentsPage() {
             <div
               key={student.id}
               id={student.id}
-              className="bg-white rounded-2xl shadow-lg p-6"
+              className="
+                w-[340px]
+                h-[210px]
+                rounded-2xl
+                overflow-hidden
+                bg-gradient-to-br
+                from-blue-700
+                to-blue-900
+                text-white
+                shadow-2xl
+                p-4
+              "
             >
 
-              <h2 className="text-xl font-bold">
-                {student.name}
-              </h2>
-
-              <p className="text-gray-500">
-                {student.email}
-              </p>
-
-              <p className="text-gray-500 mb-4">
-                {student.department}
-              </p>
-
-              <div className="flex justify-center">
-                <StudentQR value={student.studentId} />
-              </div>
-
-              <div className="text-center mt-4">
-
-                <p className="font-semibold">
-                  {student.studentId}
+              {/* HEADER */}
+              <div className="border-b border-white/30 pb-2">
+                <h1 className="text-lg font-bold">JESCA</h1>
+                <p className="text-xs tracking-widest">
+                  STUDENT IDENTIFICATION CARD
                 </p>
+              </div>
+
+              {/* BODY */}
+              <div className="flex mt-3 gap-3">
+
+                {/* LEFT */}
+                <div className="flex-1">
+
+                  <h2 className="font-bold text-sm">
+                    {student.name}
+                  </h2>
+
+                  <p className="text-xs">
+                    {student.studentId}
+                  </p>
+
+                  <p className="text-xs">
+                    {student.department}
+                  </p>
+
+                </div>
+
+                {/* QR */}
+                <div className="bg-white p-1 rounded-lg">
+                  <StudentQR value={student.studentId} />
+                </div>
 
               </div>
 
+              {/* BUTTON */}
               <button
-                onClick={() => printCard(student.id)}
-                className="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-3"
+                onClick={() =>
+                  downloadPDF(
+                    student.id,
+                    student.name,
+                    student.studentId
+                  )
+                }
+                className="
+                  mt-4
+                  w-full
+                  bg-white
+                  text-blue-700
+                  font-bold
+                  py-2
+                  rounded-lg
+                "
               >
-                Print Card
+                Download PDF
               </button>
 
             </div>
