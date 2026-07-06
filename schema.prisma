@@ -1,0 +1,144 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Profile {
+  id             String         @id @default(uuid())
+  username       String
+  name           String
+  email          String         @unique
+  phone          String?
+  role           String
+  approved       Boolean        @default(false)
+  password       String
+  barcode        String?        @unique
+  email_verified Boolean        @default(false)
+  created_at     DateTime       @default(now())
+  OTP            OTP[]
+  Anomaly        Anomaly[]
+  AuditLog       AuditLog[]
+  Notification   Notification[]
+  LoginAttempt   LoginAttempt[]
+}
+
+model Barcode {
+  id   String @id @default(uuid())
+  code String @unique
+
+  student_id String
+  is_active  Boolean @default(true)
+
+  created_at DateTime @default(now())
+
+  student Student @relation(fields: [student_id], references: [id])
+}
+
+model AttendanceRecord {
+  id String @id @default(uuid())
+
+  student_id String
+  barcode    String
+
+  check_in  DateTime
+  check_out DateTime?
+  date      DateTime
+
+  status           String
+  duration_minutes Int?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  student Student @relation(fields: [student_id], references: [id])
+}
+
+model OTP {
+  id         String   @id @default(uuid())
+  user_id    String
+  code       String
+  used       Boolean  @default(false)
+  expiresAt  DateTime
+  created_at DateTime @default(now())
+
+  user Profile @relation(fields: [user_id], references: [id])
+}
+
+model Anomaly {
+  id      String @id @default(uuid())
+  user_id String
+
+  type     String
+  severity String
+  score    Float?
+
+  description String
+
+  detected_at DateTime @default(now())
+  dismissed   Boolean  @default(false)
+
+  user Profile @relation(fields: [user_id], references: [id])
+}
+
+model AuditLog {
+  id      String  @id @default(uuid())
+  user_id String?
+
+  action    String
+  entity    String
+  entity_id String?
+  details   Json?
+
+  ip_address String?
+  created_at DateTime @default(now())
+
+  user Profile? @relation(fields: [user_id], references: [id])
+}
+
+model Notification {
+  id      String  @id @default(uuid())
+  user_id String?
+
+  type    String
+  title   String
+  message String
+
+  read Boolean @default(false)
+
+  created_at DateTime @default(now())
+
+  user Profile? @relation(fields: [user_id], references: [id])
+}
+
+model LoginAttempt {
+  id      String @id @default(uuid())
+  user_id String
+
+  attempt_count Int       @default(0)
+  locked_until  DateTime?
+  last_attempt  DateTime?
+
+  user Profile @relation(fields: [user_id], references: [id])
+}
+
+model Student {
+  id        String  @id @default(uuid())
+  studentId String  @unique
+  name      String
+  email     String? @unique
+  phone     String?
+  qrCode    String  @unique
+
+  department String?
+  year       String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  attendances AttendanceRecord[]
+  Barcode     Barcode[]
+}
