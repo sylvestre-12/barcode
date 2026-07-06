@@ -102,7 +102,11 @@ student.studentId+
 
 
 
-async function downloadPDF(id:string,name:string,studentId:string){
+async function downloadPDF(
+id:string,
+name:string,
+studentId:string
+){
 
 
 const card=document.getElementById(id);
@@ -112,23 +116,24 @@ if(!card)return;
 
 
 
-const canvas=await html2canvas(card,{
+const canvas = await html2canvas(card,{
 
 scale:4,
 
-backgroundColor:"#ffffff",
+useCORS:true,
 
-useCORS:true
+backgroundColor:null,
 
 });
 
 
+const image = canvas.toDataURL(
+"image/png"
+);
 
-const image=canvas.toDataURL("image/png");
 
 
-
-const pdf=new jsPDF({
+const pdf = new jsPDF({
 
 orientation:"landscape",
 
@@ -173,7 +178,6 @@ pdf.save(
 
 
 
-
 function printCard(id:string){
 
 
@@ -184,7 +188,11 @@ if(!card)return;
 
 
 
-const windowPrint=window.open("","_blank");
+const windowPrint=window.open(
+"",
+"_blank"
+);
+
 
 
 if(!windowPrint)return;
@@ -204,7 +212,18 @@ Silver Foundation Student Card
 
 <style>
 
+@page{
+
+size:86mm 54mm;
+
+margin:0;
+
+}
+
+
 body{
+
+margin:0;
 
 display:flex;
 
@@ -226,7 +245,6 @@ height:54mm;
 }
 
 
-
 </style>
 
 
@@ -238,8 +256,7 @@ height:54mm;
 
 <div class="card">
 
-${card.innerHTML}
-
+${card.outerHTML}
 
 </div>
 
@@ -255,10 +272,20 @@ ${card.innerHTML}
 
 windowPrint.document.close();
 
+
+
+setTimeout(()=>{
+
 windowPrint.print();
+
+windowPrint.close();
+
+},500);
+
 
 
 }
+
 
 
 
@@ -315,6 +342,7 @@ onChange={(e)=>setSearch(e.target.value)}
 
 
 
+
 {loading && (
 
 <p>
@@ -340,6 +368,8 @@ Loading students...
 
 
 
+
+
 <div className="
 grid
 md:grid-cols-2
@@ -354,6 +384,7 @@ gap-10
 {filtered.map(student=>(
 
 
+
 <div key={student.id}>
 
 
@@ -364,8 +395,8 @@ gap-10
 id={student.id}
 
 className="
-w-[344px]
-h-[216px]
+w-[86mm]
+h-[54mm]
 rounded-2xl
 overflow-hidden
 shadow-2xl
@@ -374,10 +405,12 @@ from-slate-900
 via-blue-900
 to-blue-600
 text-white
-p-5
+p-4
 "
 
+
 >
+
 
 
 
@@ -387,14 +420,14 @@ justify-between
 items-start
 border-b
 border-white/30
-pb-3
+pb-2
 ">
 
 
 <div>
 
 <h1 className="
-text-xl
+text-lg
 font-bold
 tracking-wide
 ">
@@ -405,11 +438,11 @@ Silver Foundation
 
 
 <p className="
-text-xs
+text-[10px]
 opacity-80
 ">
 
-STUDENT ID CARD
+STUDENT IDENTIFICATION CARD
 
 </p>
 
@@ -418,8 +451,9 @@ STUDENT ID CARD
 
 
 
+
 <div className="
-text-xs
+text-[10px]
 bg-white/20
 px-2
 py-1
@@ -439,20 +473,27 @@ ACTIVE
 
 
 
+
 <div className="
 flex
 justify-between
 items-center
-mt-5
+mt-3
 ">
 
 
-<div>
+
+
+
+<div className="
+max-w-[160px]
+">
 
 
 <h2 className="
-text-lg
+text-sm
 font-bold
+truncate
 ">
 
 {student.name}
@@ -460,23 +501,26 @@ font-bold
 </h2>
 
 
-<p className="text-sm">
+
+<p className="text-xs">
 
 ID:
 
 <span className="font-bold">
 
-{" "}
-{student.studentId}
+{" "}{student.studentId}
 
 </span>
-
 
 </p>
 
 
 
-<p className="text-sm">
+
+<p className="
+text-xs
+truncate
+">
 
 {student.department}
 
@@ -484,9 +528,14 @@ ID:
 
 
 
-<p className="text-xs mt-1 opacity-80">
 
-{student.email}
+<p className="
+text-[10px]
+opacity-80
+truncate
+">
+
+{student.email || "No email"}
 
 </p>
 
@@ -498,15 +547,19 @@ ID:
 
 
 
+
+
 <div className="
 bg-white
-rounded-xl
-p-2
+rounded-lg
+p-1
 ">
 
 <StudentQR
 
 value={student.studentId}
+
+size={95}
 
 />
 
@@ -515,13 +568,14 @@ value={student.studentId}
 
 
 
-</div>
-
-
-
 
 </div>
 
+
+
+
+
+</div>
 
 
 
@@ -534,6 +588,7 @@ flex
 gap-3
 mt-4
 ">
+
 
 
 <button
@@ -568,6 +623,7 @@ Download PDF
 
 
 
+
 <button
 
 onClick={()=>printCard(student.id)}
@@ -590,7 +646,10 @@ Print
 
 
 
+
 </div>
+
+
 
 
 
@@ -599,6 +658,7 @@ Print
 
 
 ))}
+
 
 
 

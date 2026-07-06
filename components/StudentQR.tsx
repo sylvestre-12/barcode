@@ -9,7 +9,7 @@ interface StudentQRProps {
 
 export default function StudentQR({
   value,
-  size = 100,
+  size = 95,
 }: StudentQRProps) {
 
   return (
@@ -20,8 +20,8 @@ export default function StudentQR({
         items-center
         justify-center
         bg-white
-        rounded-lg
-        p-1.5
+        rounded-md
+        p-1
       "
     >
 
@@ -29,18 +29,19 @@ export default function StudentQR({
         value={value}
         size={size}
         level="H"
-        includeMargin={false}
+        includeMargin={true}
         bgColor="#ffffff"
         fgColor="#000000"
       />
 
+
       <p
         className="
           mt-1
-          text-[9px]
+          text-[8px]
           font-bold
-          text-gray-700
-          tracking-wide
+          text-gray-800
+          tracking-wider
         "
       >
         {value}
