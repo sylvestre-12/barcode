@@ -2,35 +2,59 @@
 
 import { QRCodeSVG } from "qrcode.react";
 
-export default function StudentQR({ value }: { value: string }) {
-  function downloadQR() {
-    const svg = document.getElementById("qr-svg");
-    if (!svg) return;
+interface StudentQRProps {
+  value: string;
+}
 
-    const serializer = new XMLSerializer();
-    const source = serializer.serializeToString(svg);
 
-    const blob = new Blob([source], { type: "image/svg+xml" });
-    const url = URL.createObjectURL(blob);
+export default function StudentQR({
+  value,
+}: StudentQRProps) {
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${value}-qr.svg`;
-    a.click();
-  }
 
   return (
-    <div className="flex flex-col items-center p-4 bg-white rounded-xl shadow">
-      <QRCodeSVG id="qr-svg" value={value} size={180} />
 
-      <p className="mt-2 text-sm font-semibold">{value}</p>
+    <div
+      className="
+      flex
+      flex-col
+      items-center
+      justify-center
+      bg-white
+      rounded-lg
+      p-2
+      "
+    >
 
-      <button
-        onClick={downloadQR}
-        className="mt-3 px-3 py-1 bg-blue-600 text-white rounded"
+      <QRCodeSVG
+
+        value={value}
+
+        size={130}
+
+        level="H"
+
+        includeMargin={true}
+
+      />
+
+
+      <p
+        className="
+        mt-2
+        text-xs
+        font-bold
+        text-gray-700
+        "
       >
-        Download QR
-      </button>
+
+        {value}
+
+      </p>
+
+
     </div>
+
   );
+
 }

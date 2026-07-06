@@ -1,308 +1,512 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Html5QrcodeScanner } from "html5-qrcode";
+import { useEffect, useMemo, useState } from "react";
+import StudentQR from "@/components/StudentQR";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+
 
 type Student = {
   id: string;
-  name: string;
   studentId: string;
-  department?: string | null;
+  name: string;
+  email: string | null;
+  department: string | null;
 };
 
 
-export default function ScanPage() {
 
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
-  const scannedRef = useRef(false);
+export default function StudentsPage() {
 
 
-  const [result, setResult] = useState("");
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [student, setStudent] = useState<Student | null>(null);
+  const [students,setStudents] = useState<Student[]>([]);
+  const [search,setSearch] = useState("");
+  const [loading,setLoading] = useState(true);
+  const [error,setError] = useState("");
 
 
 
-  useEffect(() => {
+  useEffect(()=>{
 
-    if (scannerRef.current) return;
-
-
-    const scanner = new Html5QrcodeScanner(
-      "reader",
-      {
-        fps: 10,
-
-        qrbox:{
-          width:250,
-          height:250
-        },
-
-        rememberLastUsedCamera:true,
-
-        showTorchButtonIfSupported:true,
-
-        aspectRatio:1.0,
-      },
-      false
-    );
-
-
-    scannerRef.current = scanner;
-
-
-
-    scanner.render(
-
-      async(decodedText:string)=>{
-
-
-        if(scannedRef.current) return;
-
-
-        scannedRef.current=true;
-
-
-        setResult(decodedText);
-        setMessage("");
-        setStudent(null);
-        setLoading(true);
-
-
-
-        try{
-
-
-          const res = await fetch(
-            "/api/scan",
-            {
-              method:"POST",
-
-              headers:{
-                "Content-Type":"application/json"
-              },
-
-              body:JSON.stringify({
-                barcode:decodedText
-              })
-            }
-          );
-
-
-
-          const data = await res.json();
-
-
-
-          if(!res.ok){
-
-            setMessage(
-              data.error || "Scan failed ❌"
-            );
-
-            return;
-          }
-
-
-
-          setMessage(
-            data.message || "Scan successful ✔"
-          );
-
-
-          // show student if API sends it
-          if(data.student){
-            setStudent(data.student);
-          }
-
-
-
-        }catch(error){
-
-          console.error(error);
-
-          setMessage(
-            "Server error ❌"
-          );
-
-
-        }finally{
-
-
-          setLoading(false);
-
-
-
-          setTimeout(()=>{
-
-            scannedRef.current=false;
-
-          },2000);
-
-
-        }
-
-
-
-      },
-
-      ()=>{
-        // ignore camera scan errors
-      }
-
-    );
-
-
-
-    return()=>{
-
-      scanner.clear()
-      .catch(()=>{});
-
-      scannerRef.current=null;
-
-    };
-
+    loadStudents();
 
   },[]);
 
 
 
-  return (
+  async function loadStudents(){
 
-    <div className="
-      min-h-screen
-      flex
-      flex-col
-      items-center
-      justify-center
-      bg-gradient-to-b
-      from-gray-100
-      to-white
-      p-4
-    ">
+    try{
+
+      setLoading(true);
 
 
-      <h1 className="
-        text-2xl
-        font-bold
-        mb-4
-      ">
-        📷 CheckInAI QR Scanner
-      </h1>
+      const res = await fetch("/api/student/create");
+
+
+      const json = await res.json();
+
+
+      if(!res.ok){
+
+        throw new Error(json.error);
+
+      }
+
+
+      setStudents(json.data || json.students || []);
+
+
+    }catch(error){
+
+      console.log(error);
+
+      setError("Unable to load students.");
+
+    }
+    finally{
+
+      setLoading(false);
+
+    }
+
+  }
 
 
 
-      <div
-        id="reader"
-        className="
-          w-full
-          max-w-sm
-          border
-          rounded-xl
-          overflow-hidden
-          shadow-lg
-          bg-white
-        "
-      />
+  const filtered = useMemo(()=>{
+
+    return students.filter(student=>
+
+      (
+        student.name+
+        student.studentId+
+        (student.email ?? "")+
+        (student.department ?? "")
+      )
+      .toLowerCase()
+      .includes(search.toLowerCase())
+
+    );
 
 
-
-      {result && (
-
-        <div className="
-          mt-4
-          p-3
-          bg-white
-          rounded
-          w-full
-          max-w-sm
-          text-center
-          shadow
-        ">
-
-          <p>
-            <b>QR:</b> {result}
-          </p>
-
-        </div>
-
-      )}
+  },[students,search]);
 
 
 
 
-      {loading && (
 
-        <p className="
-          mt-3
-          text-blue-600
-          font-medium
-        ">
-          Processing scan...
-        </p>
 
-      )}
+  async function downloadPDF(id:string,name:string){
+
+
+    const card=document.getElementById(id);
+
+
+    if(!card)return;
 
 
 
-
-      {message && (
-
-        <p className="
-          mt-2
-          text-green-600
-          font-semibold
-        ">
-          {message}
-        </p>
-
-      )}
+    const canvas = await html2canvas(card,{
+      scale:3,
+      backgroundColor:"#ffffff"
+    });
 
 
 
-
-      {student && (
-
-        <div className="
-          mt-4
-          w-full
-          max-w-sm
-          bg-white
-          rounded-xl
-          shadow
-          p-5
-        ">
-
-          <h2 className="
-            text-xl
-            font-bold
-          ">
-            {student.name}
-          </h2>
+    const imgData = canvas.toDataURL("image/png");
 
 
-          <p>
-            ID:
-            <span className="font-semibold">
-              {" "}{student.studentId}
-            </span>
-          </p>
+
+    const pdf = new jsPDF({
+
+      orientation:"portrait",
+
+      unit:"mm",
+
+      format:[90,55]
+
+    });
 
 
-          <p className="text-gray-500">
-            {student.department}
-          </p>
+
+    pdf.addImage(
+      imgData,
+      "PNG",
+      5,
+      5,
+      80,
+      45
+    );
 
 
-        </div>
 
-      )}
+    pdf.save(
+      `${name}-student-card.pdf`
+    );
 
 
-    </div>
+  }
 
-  );
+
+
+
+
+
+  function printCard(id:string){
+
+
+    const card=document.getElementById(id);
+
+
+    if(!card)return;
+
+
+    const win=window.open("","_blank");
+
+
+    if(!win)return;
+
+
+
+    win.document.write(`
+
+    <html>
+
+    <head>
+
+    <title>
+    Silver Foundation Student Card
+    </title>
+
+
+    <style>
+
+    body{
+
+      display:flex;
+
+      justify-content:center;
+
+      align-items:center;
+
+      height:100vh;
+
+      font-family:Arial;
+
+    }
+
+
+    </style>
+
+
+    </head>
+
+
+    <body>
+
+    ${card.outerHTML}
+
+
+    </body>
+
+
+    </html>
+
+    `);
+
+
+
+    win.document.close();
+
+    win.print();
+
+  }
+
+
+
+
+
+return (
+
+<main className="min-h-screen bg-gray-100 p-8">
+
+
+<div className="max-w-7xl mx-auto">
+
+
+<h1 className="text-4xl font-bold">
+
+Silver Foundation
+
+</h1>
+
+
+<p className="text-gray-500 mb-8">
+
+Student Identity Cards
+
+</p>
+
+
+
+
+<input
+
+placeholder="Search student..."
+
+className="
+w-full
+p-3
+rounded-xl
+border
+mb-8
+"
+
+value={search}
+
+onChange={
+e=>setSearch(e.target.value)
+}
+
+/>
+
+
+
+
+{loading && <p>Loading...</p>}
+
+
+{error &&
+
+<p className="text-red-600">
+
+{error}
+
+</p>
+
+}
+
+
+
+
+
+<div className="grid md:grid-cols-2 xl:grid-cols-3 gap-8">
+
+
+
+{filtered.map(student=>(
+
+
+
+<div key={student.id}>
+
+
+<div
+
+id={student.id}
+
+className="
+w-[350px]
+h-[220px]
+bg-white
+rounded-2xl
+shadow-xl
+border
+p-5
+relative
+overflow-hidden
+"
+
+
+>
+
+
+
+<div className="
+text-center
+border-b
+pb-2
+">
+
+
+<h2 className="
+font-bold
+text-xl
+text-blue-800
+">
+
+Silver Foundation
+
+</h2>
+
+
+<p className="text-xs text-gray-500">
+
+Student Identification Card
+
+</p>
+
+
+</div>
+
+
+
+
+
+<div className="
+flex
+items-center
+justify-between
+mt-4
+">
+
+
+
+<div>
+
+
+<h3 className="
+font-bold
+text-lg
+">
+
+{student.name}
+
+</h3>
+
+
+<p>
+
+ID:
+<b>
+{student.studentId}
+</b>
+
+</p>
+
+
+<p className="text-sm">
+
+{student.department}
+
+</p>
+
+
+<p className="text-xs">
+
+{student.email}
+
+</p>
+
+
+
+</div>
+
+
+
+
+<div className="
+bg-white
+p-2
+rounded-lg
+border
+">
+
+<StudentQR
+
+value={student.studentId}
+
+/>
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+</div>
+
+
+
+
+
+<div className="flex gap-2 mt-4">
+
+
+<button
+
+onClick={()=>downloadPDF(
+student.id,
+student.name
+)}
+
+className="
+flex-1
+bg-green-600
+text-white
+py-2
+rounded-lg
+"
+
+>
+
+Download PDF
+
+</button>
+
+
+
+
+
+<button
+
+onClick={()=>printCard(student.id)}
+
+className="
+flex-1
+bg-blue-600
+text-white
+py-2
+rounded-lg
+"
+
+>
+
+Print
+
+</button>
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+))}
+
+
+
+</div>
+
+
+</div>
+
+
+</main>
+
+
+);
+
+
 
 }
