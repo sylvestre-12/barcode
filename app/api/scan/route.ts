@@ -1,22 +1,34 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+
 export async function POST(req: Request) {
+
   try {
+
 
     const { barcode } = await req.json();
 
 
+
     if (!barcode) {
+
       return NextResponse.json(
-        { error: "Missing barcode" },
-        { status: 400 }
+        {
+          error: "Missing barcode",
+        },
+        {
+          status: 400,
+        }
       );
+
     }
 
 
 
-    // FIND STUDENT BY BARCODE
+
+    // FIND STUDENT USING BARCODE VALUE
+    // qrCode column can store barcode values
     const student = await prisma.student.findFirst({
 
       where: {
@@ -27,11 +39,17 @@ export async function POST(req: Request) {
 
 
 
+
+
     if (!student) {
 
       return NextResponse.json(
-        { error: "Student not found" },
-        { status: 404 }
+        {
+          error: "Student not found",
+        },
+        {
+          status:404,
+        }
       );
 
     }
@@ -40,7 +58,8 @@ export async function POST(req: Request) {
 
 
 
-    // TODAY RANGE
+
+    // TODAY START AND END
 
     const startOfDay = new Date();
 
@@ -50,6 +69,7 @@ export async function POST(req: Request) {
       0,
       0
     );
+
 
 
     const endOfDay = new Date();
@@ -66,81 +86,55 @@ export async function POST(req: Request) {
 
 
 
-    // FIND LAST ATTENDANCE TODAY
 
-    const last = await prisma.attendanceRecord.findFirst({
+    // FIND LAST SCAN TODAY
 
-      where: {
+    const last =
+      await prisma.attendanceRecord.findFirst({
 
-        student_id: student.id,
+        where: {
 
-        created_at: {
+          student_id: student.id,
 
-          gte: startOfDay,
+          created_at: {
 
-          lte: endOfDay,
+            gte:startOfDay,
+
+            lte:endOfDay,
+
+          },
 
         },
 
-      },
 
-      orderBy: {
+        orderBy: {
 
-        created_at: "desc",
+          created_at:"desc",
 
-      },
-
-    });
+        },
 
 
+      });
 
 
 
 
 
-    // ANTI SPAM CHECK
-
-    if (last) {
 
 
-      const diff =
+
+    // PREVENT DOUBLE SCAN
+
+    if(last){
+
+
+      const difference =
         Date.now() -
         new Date(last.created_at).getTime();
 
 
 
-      if (diff < 30 * 1000) {
-
-
-        try {
-
-          await prisma.anomaly.create({
-
-            data: {
-
-              user_id: student.id,
-
-              type: "FAST_SCAN",
-
-              severity: "HIGH",
-
-              description:
-                "Fast repeated scan detected",
-
-            },
-
-          });
-
-
-        } catch(error) {
-
-          console.log(
-            "Anomaly log skipped:",
-            error
-          );
-
-        }
-
+      if(difference < 30000){
 
 
 
@@ -169,7 +163,9 @@ export async function POST(req: Request) {
 
 
 
-    // CHECK IN OR CHECK OUT
+
+    // IF NO RECORD OR ALREADY CHECKED OUT
+    // CREATE NEW CHECK IN
 
     const isCheckIn =
       !last ||
@@ -181,21 +177,19 @@ export async function POST(req: Request) {
 
 
 
-    // CREATE CHECK-IN
-
-    if (isCheckIn) {
+    if(isCheckIn){
 
 
       const record =
         await prisma.attendanceRecord.create({
 
-          data: {
+          data:{
 
-            student_id: student.id,
+            student_id:student.id,
 
-            barcode,
+            barcode:barcode,
 
-            check_in: new Date(),
+            check_in:new Date(),
 
             status:"present",
 
@@ -203,7 +197,9 @@ export async function POST(req: Request) {
 
           },
 
+
         });
+
 
 
 
@@ -234,7 +230,8 @@ export async function POST(req: Request) {
 
 
 
-    // UPDATE CHECK-OUT
+
+    // OTHERWISE UPDATE CHECK OUT
 
     const updated =
       await prisma.attendanceRecord.update({
@@ -251,6 +248,7 @@ export async function POST(req: Request) {
           check_out:new Date(),
 
         },
+
 
       });
 
@@ -280,12 +278,14 @@ export async function POST(req: Request) {
 
 
 
-  } catch(err) {
+
+
+  } catch(error){
 
 
     console.error(
       "SCAN_ERROR:",
-      err
+      error
     );
 
 
@@ -304,4 +304,6 @@ export async function POST(req: Request) {
 
 
   }
+
+
 }

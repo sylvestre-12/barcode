@@ -35,7 +35,6 @@ export default function ScanPage() {
 
 
 
-
   useEffect(()=>{
 
 
@@ -50,25 +49,41 @@ export default function ScanPage() {
 
       {
 
-        fps:10,
+        fps: 10,
 
-        qrbox:{
-          width:250,
-          height:250,
+
+        qrbox: {
+
+          width: 320,
+
+          height: 160,
+
         },
 
 
         rememberLastUsedCamera:true,
 
+
         showTorchButtonIfSupported:true,
 
-        aspectRatio:1.0,
+
+        aspectRatio:1.777,
+
+
+        formatsToSupport:[
+
+          8 // CODE128 barcode
+
+        ],
+
 
       },
+
 
       false
 
     );
+
 
 
 
@@ -81,11 +96,11 @@ export default function ScanPage() {
 
 
 
+
     scanner.render(
 
 
-      async(decodedText)=>{
-
+      async(decodedText:string)=>{
 
 
         if(scannedRef.current) return;
@@ -112,14 +127,18 @@ export default function ScanPage() {
 
 
 
-          const res = await fetch(
+          const response = await fetch(
+
             "/api/scan",
+
             {
 
               method:"POST",
 
               headers:{
+
                 "Content-Type":"application/json",
+
               },
 
 
@@ -130,6 +149,7 @@ export default function ScanPage() {
               }),
 
             }
+
           );
 
 
@@ -137,21 +157,29 @@ export default function ScanPage() {
 
 
 
-          const data = await res.json();
+
+          const data = await response.json();
 
 
 
 
 
-          if(!res.ok){
+
+
+          if(!response.ok){
 
 
             setMessage(
-              data.error || "Scan failed ❌"
+
+              data.error ||
+
+              "Barcode not recognized ❌"
+
             );
 
 
             return;
+
 
           }
 
@@ -164,6 +192,7 @@ export default function ScanPage() {
           setMessage(
 
             data.message ||
+
             "Scan successful ✔"
 
           );
@@ -187,23 +216,27 @@ export default function ScanPage() {
 
 
 
-        } catch(error){
+        }catch(error){
 
 
           console.error(
-            "SCAN ERROR:",
+
+            "SCAN ERROR",
+
             error
+
           );
 
 
           setMessage(
-            "Server error ❌"
+
+            "Server connection failed ❌"
+
           );
 
 
 
-        } finally {
-
+        }finally{
 
 
           setLoading(false);
@@ -231,9 +264,9 @@ export default function ScanPage() {
 
 
 
-      ()=>{
+      (errorMessage)=>{
 
-        // camera scan errors ignored
+        // ignore continuous camera searching errors
 
       }
 
@@ -253,8 +286,11 @@ export default function ScanPage() {
 
 
         scannerRef.current
+
           .clear()
+
           .catch(()=>{});
+
 
 
         scannerRef.current=null;
@@ -276,234 +312,68 @@ export default function ScanPage() {
 
 
 
-
   return (
 
-
-    <div
-
-      className="
-      min-h-screen
-      flex
-      flex-col
-      items-center
-      justify-center
-      bg-gray-100
-      p-4
-      "
-
-    >
+    <main className="min-h-screen bg-gradient-to-b from-gray-100 to-white flex flex-col items-center justify-center p-5">
 
 
 
+      <div className="bg-white shadow-xl rounded-2xl p-6 w-full max-w-md">
 
-      <h1
 
-        className="
-        text-2xl
-        font-bold
-        mb-4
-        "
 
-      >
+        <h1 className="text-2xl font-bold text-center mb-2">
 
-        📷 CheckInAI QR Scanner
+          📷 CheckInAI Barcode Scanner
 
-      </h1>
+        </h1>
 
 
 
 
+        <p className="text-gray-500 text-center mb-5">
 
-
-
-      <div
-
-        id="reader"
-
-        className="
-        w-full
-        max-w-sm
-        border
-        rounded-xl
-        overflow-hidden
-        shadow-lg
-        bg-white
-        "
-
-      />
-
-
-
-
-
-
-
-
-
-      {result && (
-
-
-        <div
-
-          className="
-          mt-4
-          p-3
-          bg-white
-          rounded-xl
-          w-full
-          max-w-sm
-          text-center
-          shadow
-          "
-
-        >
-
-
-          <p>
-
-            <b>QR:</b> {result}
-
-          </p>
-
-
-
-        </div>
-
-
-      )}
-
-
-
-
-
-
-
-
-
-      {loading && (
-
-
-        <p
-
-          className="
-          mt-3
-          text-blue-600
-          font-medium
-          "
-
-        >
-
-          Processing scan...
+          Scan student ID barcode
 
         </p>
 
 
-      )}
 
-
-
-
-
-
-
-
-      {message && (
-
-
-        <p
-
-          className="
-          mt-3
-          text-green-600
-          font-semibold
-          "
-
-        >
-
-          {message}
-
-        </p>
-
-
-      )}
-
-
-
-
-
-
-
-
-
-      {student && (
 
 
         <div
 
+          id="reader"
+
           className="
-          mt-4
-          w-full
-          max-w-sm
-          bg-white
+
+          overflow-hidden
+
           rounded-xl
-          shadow
-          p-5
+
+          border
+
+          bg-black
+
           "
 
-        >
-
-
-
-          <h2
-
-            className="
-            text-xl
-            font-bold
-            "
-
-          >
-
-            {student.name}
-
-          </h2>
+        />
 
 
 
 
 
-          <p>
 
-            ID:
 
-            <span className="font-semibold">
+        {loading && (
 
-              {" "}{student.studentId}
+          <p className="text-blue-600 text-center mt-4 font-semibold">
 
-            </span>
-
+            Processing scan...
 
           </p>
 
-
-
-
-
-
-          <p className="text-gray-500">
-
-            {student.department}
-
-          </p>
-
-
-
-
-
-        </div>
-
-
-      )}
+        )}
 
 
 
@@ -511,8 +381,109 @@ export default function ScanPage() {
 
 
 
-    </div>
+        {result && (
 
+          <div className="mt-4 bg-gray-100 rounded-xl p-3">
+
+            <p className="font-semibold">
+
+              Barcode:
+
+            </p>
+
+
+            <p className="break-all text-sm">
+
+              {result}
+
+            </p>
+
+
+          </div>
+
+        )}
+
+
+
+
+
+
+
+        {message && (
+
+          <div className="mt-4 text-center">
+
+
+            <p className="font-bold text-green-600">
+
+              {message}
+
+            </p>
+
+
+          </div>
+
+        )}
+
+
+
+
+
+
+
+
+        {student && (
+
+          <div className="mt-5 bg-green-50 rounded-xl p-5">
+
+
+            <h2 className="text-xl font-bold">
+
+              {student.name}
+
+            </h2>
+
+
+
+
+            <p className="mt-2">
+
+              Student ID:
+
+              <span className="font-semibold">
+
+                {" "}{student.studentId}
+
+              </span>
+
+            </p>
+
+
+
+
+
+            <p className="text-gray-600">
+
+              {student.department}
+
+            </p>
+
+
+
+          </div>
+
+        )}
+
+
+
+
+
+
+      </div>
+
+
+
+    </main>
 
   );
 

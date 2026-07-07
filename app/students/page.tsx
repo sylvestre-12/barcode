@@ -195,33 +195,24 @@ export default function StudentsPage() {
     <head>
 
     <style>
+@page {
+  size: A4;
+  margin: 15mm;
+}
 
-    @page{
+body {
+  margin: 0;
+  background: white;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 20mm;
+}
 
-      size:86mm 54mm;
-      margin:0;
-
-    }
-
-
-    body{
-
-      margin:0;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      height:100vh;
-
-    }
-
-
-    .card{
-
-      width:86mm;
-      height:54mm;
-
-    }
-
+.card {
+  width: 86mm;
+  height: 54mm;
+}
     </style>
 
 
