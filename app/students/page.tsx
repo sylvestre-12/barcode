@@ -1,278 +1,273 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import StudentQR from "@/components/StudentQR";
+
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-
-
+import StudentBarcode from "@/components/StudentBarcode";
 
 
 type Student = {
-  id:string;
-  studentId:string;
-  name:string;
-  email:string | null;
-  department:string | null;
+  id: string;
+  studentId: string;
+  name: string;
+  email: string | null;
+  department: string | null;
 };
 
 
-
-export default function StudentsPage(){
-
-
-const [students,setStudents]=useState<Student[]>([]);
-const [search,setSearch]=useState("");
-const [loading,setLoading]=useState(true);
-const [error,setError]=useState("");
+export default function StudentsPage() {
 
 
-
-useEffect(()=>{
-
-loadStudents();
-
-},[]);
+  const [students,setStudents] = useState<Student[]>([]);
+  const [search,setSearch] = useState("");
+  const [loading,setLoading] = useState(true);
+  const [error,setError] = useState("");
 
 
 
-async function loadStudents(){
+  useEffect(()=>{
 
-try{
+    loadStudents();
 
-setLoading(true);
-
-
-const res=await fetch("/api/student/create");
-
-
-const json=await res.json();
-
-
-if(!res.ok){
-
-throw new Error(json.error);
-
-}
-
-
-setStudents(json.data || []);
-
-
-}catch(error){
-
-console.log(error);
-
-setError("Unable to load students.");
-
-}
-finally{
-
-setLoading(false);
-
-}
-
-}
+  },[]);
 
 
 
+  async function loadStudents(){
+
+    try{
+
+      setLoading(true);
+
+      const res = await fetch("/api/student/create");
+
+      const json = await res.json();
 
 
-const filtered=useMemo(()=>{
+      if(!res.ok){
+
+        throw new Error(json.error);
+
+      }
 
 
-return students.filter(student=>
-
-(
-student.name+
-student.studentId+
-(student.email ?? "")+
-(student.department ?? "")
-)
-.toLowerCase()
-.includes(search.toLowerCase())
+      setStudents(json.data || []);
 
 
-);
+    }catch(error){
 
+      console.log(error);
 
-},[students,search]);
+      setError("Unable to load students.");
 
+    }
+    finally{
 
+      setLoading(false);
 
+    }
 
-
-
-
-async function downloadPDF(
-  id: string,
-  name: string,
-  studentId: string
-) {
-
-  const card = document.getElementById(id);
-
-  if (!card) {
-    console.log("Card not found");
-    return;
   }
 
 
-  const canvas = await html2canvas(card, {
-    scale: 5,
-    useCORS: true,
-    backgroundColor: "#ffffff",
-  });
 
 
-  const image = canvas.toDataURL("image/png");
 
+  const filtered = useMemo(()=>{
 
-  const pdf = new jsPDF({
-    orientation: "landscape",
-    unit: "mm",
-    format: [86, 54],
-  });
 
+    return students.filter(student=>
 
-  pdf.addImage(
-    image,
-    "PNG",
-    0,
-    0,
-    86,
-    54
-  );
+      (
+        student.name+
+        student.studentId+
+        (student.email ?? "")+
+        (student.department ?? "")
+      )
+      .toLowerCase()
+      .includes(search.toLowerCase())
 
+    );
 
-  pdf.save(
-    `${studentId}-${name}.pdf`
-  );
 
-}
+  },[students,search]);
 
 
 
 
 
 
-function printCard(id:string){
 
+  async function downloadPDF(
+    id:string,
+    name:string,
+    studentId:string
+  ){
 
-const card=document.getElementById(id);
 
+    const card = document.getElementById(id);
 
-if(!card)return;
 
+    if(!card)return;
 
 
-const windowPrint=window.open(
-"",
-"_blank"
-);
 
+    const canvas = await html2canvas(card,{
 
+      scale:5,
+      useCORS:true,
+      backgroundColor:"#ffffff",
+      foreignObjectRendering:false,
+      logging:false
 
-if(!windowPrint)return;
+    });
 
 
 
-windowPrint.document.write(`
+    const image = canvas.toDataURL("image/png");
 
-<html>
 
-<head>
 
-<title>
-Silver Foundation Student Card
-</title>
+    const pdf = new jsPDF({
 
+      orientation:"landscape",
+      unit:"mm",
+      format:[86,54]
 
-<style>
+    });
 
-@page{
 
-size:86mm 54mm;
 
-margin:0;
+    pdf.addImage(
 
-}
+      image,
+      "PNG",
+      0,
+      0,
+      86,
+      54
 
+    );
 
-body{
 
-margin:0;
 
-display:flex;
+    pdf.save(
 
-justify-content:center;
+      `${studentId}-${name}.pdf`
 
-align-items:center;
+    );
 
-height:100vh;
 
-}
+  }
 
 
-.card{
 
-width:86mm;
 
-height:54mm;
 
-}
 
 
-</style>
 
+  function printCard(id:string){
 
-</head>
 
+    const card=document.getElementById(id);
 
-<body>
 
+    if(!card)return;
 
-<div class="card">
 
-${card.outerHTML}
 
-</div>
+    const windowPrint = window.open(
+      "",
+      "_blank"
+    );
 
 
-</body>
+    if(!windowPrint)return;
 
 
-</html>
 
-`);
+    windowPrint.document.write(`
 
+    <html>
 
+    <head>
 
-windowPrint.document.close();
+    <style>
 
+    @page{
 
+      size:86mm 54mm;
+      margin:0;
 
-setTimeout(()=>{
+    }
 
-windowPrint.print();
 
-windowPrint.close();
+    body{
 
-},500);
+      margin:0;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      height:100vh;
 
+    }
 
 
-}
+    .card{
 
+      width:86mm;
+      height:54mm;
 
+    }
 
+    </style>
 
 
+    </head>
 
 
+    <body>
 
-return(
+      <div class="card">
 
+      ${card.outerHTML}
+
+      </div>
+
+
+    </body>
+
+
+    </html>
+
+    `);
+
+
+
+    windowPrint.document.close();
+
+
+
+    setTimeout(()=>{
+
+      windowPrint.print();
+      windowPrint.close();
+
+    },500);
+
+
+  }
+
+
+
+
+
+
+
+
+return (
 
 <main className="min-h-screen bg-gray-100 p-8">
 
@@ -287,9 +282,10 @@ Silver Foundation
 </h1>
 
 
+
 <p className="text-gray-500 mb-8">
 
-Official Student Identification Cards
+Barcode Student Identification Cards
 
 </p>
 
@@ -314,8 +310,6 @@ value={search}
 onChange={(e)=>setSearch(e.target.value)}
 
 />
-
-
 
 
 
@@ -347,7 +341,6 @@ Loading students...
 
 
 
-
 <div className="
 grid
 md:grid-cols-2
@@ -359,32 +352,44 @@ gap-10
 
 
 
-{filtered.map(student=>(
 
+{filtered.map(student=>(
 
 
 <div key={student.id}>
 
 
-{/* CARD */}
+
+
 
 <div
 
 id={student.id}
 
-className="
-w-[86mm]
-h-[54mm]
-rounded-2xl
-overflow-hidden
-shadow-2xl
-bg-gradient-to-br
-from-slate-900
-via-blue-900
-to-blue-600
-text-white
-p-4
-"
+style={{
+
+width:"86mm",
+
+height:"54mm",
+
+borderRadius:"16px",
+
+overflow:"hidden",
+
+background:
+"linear-gradient(135deg,#0f172a,#1e3a8a,#2563eb)",
+
+color:"#ffffff",
+
+padding:"16px",
+
+display:"flex",
+
+flexDirection:"column",
+
+justifyContent:"space-between"
+
+}}
 
 
 >
@@ -392,128 +397,57 @@ p-4
 
 
 
-<div className="
-flex
-justify-between
-items-start
-border-b
-border-white/30
-pb-2
-">
+
+<div
+
+style={{
+
+textAlign:"center",
+
+borderBottom:"1px solid rgba(255,255,255,0.3)",
+
+paddingBottom:"8px"
+
+}}
+
+>
 
 
-<div>
 
-<h1 className="
-text-lg
-font-bold
-tracking-wide
-">
+<h1
+
+style={{
+
+fontSize:"18px",
+
+fontWeight:"700",
+
+letterSpacing:"0.05em"
+
+}}
+
+>
 
 Silver Foundation
 
 </h1>
 
 
-<p className="
-text-[10px]
-opacity-80
-">
-
-STUDENT IDENTIFICATION CARD
-
-</p>
 
 
-</div>
+<p
 
+style={{
 
+fontSize:"10px",
 
+opacity:0.8
 
-<div className="
-text-[10px]
-bg-white/20
-px-2
-py-1
-rounded
-">
+}}
 
-ACTIVE
+>
 
-</div>
-
-
-
-</div>
-
-
-
-
-
-
-
-<div className="
-flex
-justify-between
-items-center
-mt-3
-">
-
-
-
-
-
-<div className="
-max-w-[160px]
-">
-
-
-<h2 className="
-text-sm
-font-bold
-truncate
-">
-
-{student.name}
-
-</h2>
-
-
-
-<p className="text-xs">
-
-ID:
-
-<span className="font-bold">
-
-{" "}{student.studentId}
-
-</span>
-
-</p>
-
-
-
-
-<p className="
-text-xs
-truncate
-">
-
-{student.department}
-
-</p>
-
-
-
-
-<p className="
-text-[10px]
-opacity-80
-truncate
-">
-
-{student.email || "No email"}
+STUDENT BARCODE CARD
 
 </p>
 
@@ -527,25 +461,43 @@ truncate
 
 
 
-<div className="
-bg-white
-rounded-lg
-p-1
-">
 
-<StudentQR
+
+<div
+
+style={{
+
+display:"flex",
+
+alignItems:"center",
+
+justifyContent:"center",
+
+flex:1,
+
+background:"#ffffff",
+
+borderRadius:"12px",
+
+padding:"12px"
+
+}}
+
+>
+
+
+
+<StudentBarcode
 
 value={student.studentId}
 
+width={2.2}
 
+height={65}
 
 />
 
 
-</div>
-
-
-
 
 </div>
 
@@ -554,6 +506,8 @@ value={student.studentId}
 
 
 </div>
+
+
 
 
 
@@ -566,6 +520,8 @@ flex
 gap-3
 mt-4
 ">
+
+
 
 
 
@@ -602,6 +558,7 @@ Download PDF
 
 
 
+
 <button
 
 onClick={()=>printCard(student.id)}
@@ -625,14 +582,14 @@ Print
 
 
 
-</div>
-
-
-
-
 
 </div>
 
+
+
+
+
+</div>
 
 
 ))}

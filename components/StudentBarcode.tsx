@@ -15,6 +15,7 @@ export default function StudentBarcode({
 }: StudentBarcodeProps) {
 
   return (
+
     <div
       style={{
         display: "flex",
@@ -49,11 +50,11 @@ export default function StudentBarcode({
 
       <p
         style={{
-          marginTop: "8px",
-          fontSize: "12px",
-          fontWeight: "700",
-          letterSpacing: "0.2em",
-          color:"#5e742c",
+          marginTop:"8px",
+          fontSize:"12px",
+          fontWeight:"700",
+          letterSpacing:"0.2em",
+          color:"#166534",
         }}
       >
         STUDENT ID
@@ -61,5 +62,6 @@ export default function StudentBarcode({
 
 
     </div>
+
   );
 }
