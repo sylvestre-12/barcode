@@ -6,6 +6,8 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
 
+
+
 type Student = {
   id:string;
   studentId:string;
@@ -103,75 +105,51 @@ student.studentId+
 
 
 async function downloadPDF(
-id:string,
-name:string,
-studentId:string
-){
+  id: string,
+  name: string,
+  studentId: string
+) {
+
+  const card = document.getElementById(id);
+
+  if (!card) {
+    console.log("Card not found");
+    return;
+  }
 
 
-const card=document.getElementById(id);
+  const canvas = await html2canvas(card, {
+    scale: 5,
+    useCORS: true,
+    backgroundColor: "#ffffff",
+  });
 
 
-if(!card)return;
+  const image = canvas.toDataURL("image/png");
 
 
-
-const canvas = await html2canvas(card,{
-
-scale:4,
-
-useCORS:true,
-
-backgroundColor:null,
-
-});
+  const pdf = new jsPDF({
+    orientation: "landscape",
+    unit: "mm",
+    format: [86, 54],
+  });
 
 
-const image = canvas.toDataURL(
-"image/png"
-);
+  pdf.addImage(
+    image,
+    "PNG",
+    0,
+    0,
+    86,
+    54
+  );
 
 
-
-const pdf = new jsPDF({
-
-orientation:"landscape",
-
-unit:"mm",
-
-format:[86,54]
-
-});
-
-
-
-pdf.addImage(
-
-image,
-
-"PNG",
-
-0,
-
-0,
-
-86,
-
-54
-
-);
-
-
-
-pdf.save(
-
-`${name}-${studentId}.pdf`
-
-);
-
+  pdf.save(
+    `${studentId}-${name}.pdf`
+  );
 
 }
-
 
 
 
@@ -559,7 +537,7 @@ p-1
 
 value={student.studentId}
 
-size={95}
+
 
 />
 

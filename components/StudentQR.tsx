@@ -1,17 +1,18 @@
 "use client";
 
-import { QRCodeSVG } from "qrcode.react";
+import Barcode from "react-barcode";
 
-interface StudentQRProps {
+interface StudentBarcodeProps {
   value: string;
-  size?: number;
+  width?: number;
+  height?: number;
 }
 
-export default function StudentQR({
+export default function StudentBarcode({
   value,
-  size = 95,
-}: StudentQRProps) {
-
+  width = 2,
+  height = 60,
+}: StudentBarcodeProps) {
   return (
     <div
       className="
@@ -20,33 +21,41 @@ export default function StudentQR({
         items-center
         justify-center
         bg-white
-        rounded-md
-        p-1
+        rounded-xl
+        border-2
+        border-green-700
+        p-3
+        shadow-md
+        w-fit
       "
     >
-
-      <QRCodeSVG
+      <Barcode
         value={value}
-        size={size}
-        level="H"
-        includeMargin={true}
-        bgColor="#ffffff"
-        fgColor="#000000"
+        format="CODE128"
+        width={width}
+        height={height}
+        displayValue={true}
+        fontSize={14}
+        font="monospace"
+        textAlign="center"
+        textPosition="bottom"
+        textMargin={5}
+        background="#ffffff"
+        lineColor="#000000"
+        margin={10}
       />
-
 
       <p
         className="
-          mt-1
-          text-[8px]
+          mt-2
+          text-xs
           font-bold
-          text-gray-800
-          tracking-wider
+          tracking-widest
+          text-green-800
         "
       >
-        {value}
+        STUDENT ID
       </p>
-
     </div>
   );
 }
